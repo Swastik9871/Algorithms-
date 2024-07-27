@@ -1,0 +1,54 @@
+class CuckooHashTable:
+    def __init__(self, size):
+        self.size = size
+        self.table1 = [None] * size
+        self.table2 = [None] * size
+        self.max_attempts = 20
+
+    def _hash_functions(self, key):
+        hash1 = hash(key) % self.size
+        hash2 = (hash(key) // self.size) % self.size
+        return hash1, hash2
+
+    def _rehash(self, key, table1, table2, attempts):
+        if attempts == self.max_attempts:
+            # Increase table size or handle collision differently
+            raise Exception("Max attempts reached, consider resizing the table")
+
+        current_table, alt_table = (table1, table2) if attempts % 2 == 0 else (table2, table1)
+        hash1, hash2 = self._hash_functions(key)
+
+        if current_table[hash1] is None:
+            current_table[hash1] = key
+        else:
+            displaced_key = current_table[hash1]
+            current_table[hash1] = key
+            self._rehash(displaced_key, alt_table, current_table, attempts + 1)
+
+    def insert(self, key):
+        hash1, hash2 = self._hash_functions(key)
+
+        if self.table1[hash1] is None:
+            self.table1[hash1] = key
+        elif self.table2[hash2] is None:
+            self.table2[hash2] = key
+        else:
+            # Handle collision by rehashing
+            self._rehash(key, self.table1, self.table2, 0)
+
+    def search(self, key):
+        hash1, hash2 = self._hash_functions(key)
+
+        if self.table1[hash1] == key or self.table2[hash2] == key:
+            return True
+        else:
+            return False
+
+# Example usage:
+cuckoo_hash_table = CuckooHashTable(size=10)
+cuckoo_hash_table.insert("apple")
+cuckoo_hash_table.insert("banana")
+cuckoo_hash_table.insert("orange")
+
+print(cuckoo_hash_table.search("apple"))  # True
+print(cuckoo_hash_table.search("grape"))  # False
